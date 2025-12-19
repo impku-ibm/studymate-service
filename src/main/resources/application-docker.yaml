@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://mongo:27017/studymate}
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:1}
+
+jwt:
+  secret: ${JWT_SECRET:my-super-secret-key-which-is-long}
+  expiration: ${JWT_EXPIRATION:3600000}

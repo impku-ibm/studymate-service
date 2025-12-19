@@ -1,0 +1,13 @@
+spring:
+   profiles:
+      active: prod
+   data:
+      mongodb:
+         uri: ${MONGO_URI}
+      redis:
+         host: ${REDIS_HOST}
+         port: ${REDIS_PORT}
+         password: ${REDIS_PASSWORD}
+
+server:
+   port: ${PORT:8080}
