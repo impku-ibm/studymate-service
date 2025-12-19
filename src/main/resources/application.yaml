@@ -4,10 +4,10 @@ spring:
   data:
     mongodb:
       uri: mongodb+srv://pankaj_unifocus:Qq4M0SEkN6xRHJj8@cluster0.eqazi0r.mongodb.net/studymate?appName=Cluster0
-    redis:
-      host: localhost
-      port: 6379
-      database: 1
+#    redis:
+#      host: localhost
+#      port: 6379
+#      database: 1
 
 jwt:
   secret: my-super-secret-key-which-is-long
