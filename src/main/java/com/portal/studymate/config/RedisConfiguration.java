@@ -1,5 +1,6 @@
 package com.portal.studymate.config;
 
+import org.springframework.boot.autoconfigure.data.redis.LettuceClientConfigurationBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -21,5 +22,12 @@ public class RedisConfiguration {
 
       template.afterPropertiesSet();
       return template;
+   }
+
+   @Bean
+   public LettuceClientConfigurationBuilderCustomizer lettuceCustomizer() {
+      return builder -> builder
+                           .useSsl()
+                           .disablePeerVerification();
    }
 }
