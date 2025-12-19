@@ -24,10 +24,4 @@ public class RedisConfiguration {
       return template;
    }
 
-   @Bean
-   public LettuceClientConfigurationBuilderCustomizer lettuceCustomizer() {
-      return builder -> builder
-                           .useSsl()
-                           .disablePeerVerification();
-   }
 }

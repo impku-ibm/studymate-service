@@ -8,14 +8,7 @@ spring:
     redis:
       url: ${REDIS_URL}
       timeout: 5000
-      ssl:
-        enabled: true
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-          max-wait: -1ms
+
 
 
 jwt:
