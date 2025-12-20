@@ -1,5 +1,8 @@
 package com.portal.studymate.common.exception;
 
+import com.portal.studymate.user.dtos.ApiErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +48,27 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("USER_NOT_FOUND", "User not found"));
     }
 
+    @ExceptionHandler(SchoolNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleSchoolNotFound(SchoolNotFoundException ex) {
+        log.warn("School not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("SCHOOL_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ClassRoomNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleClassRoomNotFound(ClassRoomNotFoundException ex) {
+        log.warn("ClassRoom not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("CLASSROOM_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(TeacherNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTeacherNotFound(TeacherNotFoundException ex) {
+        log.warn("Teacher not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("TEACHER_NOT_FOUND", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -73,5 +98,36 @@ public class GlobalExceptionHandler {
 
         public String getCode() { return code; }
         public String getMessage() { return message; }
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleConstraint(
+       ConstraintViolationException ex,
+       HttpServletRequest request
+    ) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
+       IllegalArgumentException ex,
+       HttpServletRequest request
+    ) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    private ResponseEntity<ApiErrorResponse> build(
+       HttpStatus status,
+       String message,
+       HttpServletRequest request
+    ) {
+        return ResponseEntity.status(status)
+                             .body(new ApiErrorResponse(
+                                Instant.now(),
+                                status.value(),
+                                status.getReasonPhrase(),
+                                message,
+                                request.getRequestURI()
+                             ));
     }
 }

@@ -1,0 +1,18 @@
+spring:
+   data:
+      mongodb:
+         uri: mongodb+srv://pankaj_unifocus:Qq4M0SEkN6xRHJj8@cluster0.eqazi0r.mongodb.net/studymate?appName=Cluster0
+   datasource:
+      url: jdbc:postgresql://ep-dawn-smoke-a1c3o9zg-pooler.ap-southeast-1.aws.neon.tech/studymate_user?sslmode=require&channel_binding=require
+      username: neondb_owner
+      password: npg_kdnJ04qZbugO
+      driver-class-name: org.postgresql.Driver
+
+   jpa:
+      hibernate:
+         ddl-auto: validate
+      show-sql: false
+
+   flyway:
+      enabled: true
+      locations: classpath:db/migration

@@ -1,9 +1,7 @@
 spring:
   application:
     name: School Application Portal
-  data:
-    mongodb:
-      uri: mongodb+srv://pankaj_unifocus:Qq4M0SEkN6xRHJj8@cluster0.eqazi0r.mongodb.net/studymate?appName=Cluster0
+
 #    redis:
 #      host: localhost
 #      port: 6379
@@ -12,6 +10,20 @@ spring:
 jwt:
   secret: my-super-secret-key-which-is-long
   expiration: 3600000 # 1 hour
+
+logging:
+  level:
+    com.portal.studymate: INFO
+    com.portal.studymate.auth: INFO
+    com.portal.studymate.user: INFO
+    com.portal.studymate.common.jwt: DEBUG
+    org.springframework.security: WARN
+    org.springframework.data: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/studymate.log
 
 management:
   endpoints:

@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 public class AuthServiceImpl implements AuthService {
 
    private static final String USER_ROLE = "USER";
-
    private final UserRepository userRepository;
    private final JwtUtil jwtUtil;
    private final RedisTemplate<String, String> redisTemplate;
@@ -39,13 +38,15 @@ public class AuthServiceImpl implements AuthService {
 
    @Override
    public void signup(SignupRequest request) {
-      if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+
+      if (userRepository.findByEmail(request.getEmail().toLowerCase()).isPresent()) {
          throw new UserAlreadyExistsException("User with email " + request.getEmail() + " already exists");
       }
       userRepository.save(User.builder()
-                              .email(request.getEmail())
+                              .email(request.getEmail().toLowerCase())
                               .password(passwordEncoder.encode(request.getPassword()))
-                              .role(USER_ROLE)
+                              .role(request.getRole())
+                              .schoolId("upadhyay-school-123")
                               .enabled(true)
                               .build());
       log.info("User registered successfully with email: {}", request.getEmail());
@@ -53,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
 
    @Override
    public LoginResponse login(LoginRequest loginRequest) {
-      User user = userRepository.findByEmail(loginRequest.getEmail())
+      User user = userRepository.findByEmail(loginRequest.getEmail().toLowerCase())
                                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
       if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
@@ -67,6 +68,7 @@ public class AuthServiceImpl implements AuthService {
       return LoginResponse.builder()
                           .token(accessToken)
                           .refreshToken(refreshToken)
+                          .message("Success")
                           .build();
    }
 
@@ -92,6 +94,7 @@ public class AuthServiceImpl implements AuthService {
       return LoginResponse.builder()
                           .token(newAccessToken)
                           .refreshToken(newRefreshToken)
+                          .message("Success")
                           .build();
    }
 
