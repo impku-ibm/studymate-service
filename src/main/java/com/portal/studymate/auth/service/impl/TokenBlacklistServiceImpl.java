@@ -30,5 +30,4 @@ public class TokenBlacklistServiceImpl implements TokenBlacklistService {
          redisTemplate.hasKey("blacklist:access:" + HashUtil.sha256(token))
       );
    }
-
 }

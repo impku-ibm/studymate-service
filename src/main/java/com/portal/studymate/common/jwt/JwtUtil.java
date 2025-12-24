@@ -22,28 +22,34 @@ public class JwtUtil {
    @Value("${jwt.expiration}")
    private long expiration;
 
+   private Key signingKey;
+
    @PostConstruct
-   public void validateSecret() {
+   public void init() {
       if (secret == null || secret.length() < 32) {
          throw new IllegalStateException("JWT secret must be at least 256 bits");
       }
+      this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
    }
+
+   /* ================= ACCESS TOKEN ================= */
 
    public String generateToken(User user) {
       return Jwts.builder()
                  .setSubject(user.getId())
+                 .setIssuer("studymate")
                  .claim("email", user.getEmail())
-                 .claim("role", user.getRole())
+                 .claim("role", user.getRole().name())
                  .claim("schoolId", user.getSchoolId())
                  .setIssuedAt(new Date())
                  .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                 .signWith(getSigningKey())
+                 .signWith(signingKey)
                  .compact();
    }
 
    public Claims parseToken(String token) {
       return Jwts.parserBuilder()
-                 .setSigningKey(secret.getBytes())
+                 .setSigningKey(signingKey)
                  .build()
                  .parseClaimsJws(token)
                  .getBody();
@@ -56,17 +62,15 @@ public class JwtUtil {
    }
 
    public String generateRefreshToken(User user) {
-      long expirationTimeMillis = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(7);
-      Date expirationDate = new Date(expirationTimeMillis);
+      long expiry = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(7);
+
       return Jwts.builder()
                  .setSubject(user.getId())
+                 .setIssuer("studymate")
+                 .claim("schoolId", user.getSchoolId())
                  .setIssuedAt(new Date())
-                 .setExpiration(expirationDate)
-                 .signWith(getSigningKey())
+                 .setExpiration(new Date(expiry))
+                 .signWith(signingKey)
                  .compact();
-   }
-
-   private Key getSigningKey() {
-      return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
    }
 }

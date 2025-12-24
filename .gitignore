@@ -44,3 +44,4 @@ docker-compose.override.yml
 # Logs
 logs/
 *.log
+src/main/resources/logback-spring.xml

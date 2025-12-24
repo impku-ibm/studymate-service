@@ -1,7 +1,9 @@
 package com.portal.studymate.auth.service.impl;
 
+import com.portal.studymate.auth.dtos.ChangePasswordRequest;
 import com.portal.studymate.auth.dtos.LoginRequest;
 import com.portal.studymate.auth.dtos.LoginResponse;
+import com.portal.studymate.auth.dtos.ResetPasswordRequest;
 import com.portal.studymate.auth.dtos.SignupRequest;
 import com.portal.studymate.auth.service.AuthService;
 import com.portal.studymate.auth.service.RateLimitService;
@@ -10,10 +12,14 @@ import com.portal.studymate.common.exception.InvalidCredentialsException;
 import com.portal.studymate.common.exception.InvalidTokenException;
 import com.portal.studymate.common.exception.UserAlreadyExistsException;
 import com.portal.studymate.common.exception.UserNotFoundException;
+import com.portal.studymate.common.jwt.JwtContextService;
 import com.portal.studymate.common.jwt.JwtUtil;
 import com.portal.studymate.common.util.HashUtil;
+import com.portal.studymate.common.util.PasswordGenerator;
+import com.portal.studymate.common.util.Role;
 import com.portal.studymate.user.model.User;
 import com.portal.studymate.user.repository.UserRepository;
+import io.jsonwebtoken.Claims;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -21,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -35,6 +42,7 @@ public class AuthServiceImpl implements AuthService {
    private final PasswordEncoder passwordEncoder;
    private final RateLimitService rateLimitService;
    private final TokenBlacklistService tokenBlacklistService;
+   private final JwtContextService jwtContextService;
 
    @Override
    public void signup(SignupRequest request) {
@@ -42,14 +50,39 @@ public class AuthServiceImpl implements AuthService {
       if (userRepository.findByEmail(request.getEmail().toLowerCase()).isPresent()) {
          throw new UserAlreadyExistsException("User with email " + request.getEmail() + " already exists");
       }
-      userRepository.save(User.builder()
-                              .email(request.getEmail().toLowerCase())
-                              .password(passwordEncoder.encode(request.getPassword()))
-                              .role(request.getRole())
-                              .schoolId("upadhyay-school-123")
-                              .enabled(true)
-                              .build());
-      log.info("User registered successfully with email: {}", request.getEmail());
+
+      if (request.getRole() == Role.ADMIN) {
+         throw new IllegalArgumentException("Admin user cannot be created via signup");
+      }
+      String schoolId = jwtContextService.getSchoolId();
+      String tempPassword = PasswordGenerator.generate();
+
+      User user = User.builder()
+                      .email(request.getEmail().toLowerCase())
+                      .password(passwordEncoder.encode(tempPassword))
+                      .role(request.getRole())
+                      .schoolId(schoolId)
+                      .enabled(true)
+                      .forcePasswordChange(true)
+                      .build();
+
+      userRepository.save(user);
+      // 6. Send credentials (email / admin UI / log for dev)
+//      notificationService.sendUserCredentials(
+//         request.getEmail(),
+//         tempPassword
+//      );
+      log.info(
+         "TEMP PASSWORD for {} is {} (remove in production)",
+         request.getEmail(),
+         tempPassword
+      );
+      log.info(
+         "User created successfully. Email={}, Role={}, School={}",
+         request.getEmail(),
+         request.getRole(),
+         schoolId
+      );
    }
 
    @Override
@@ -57,22 +90,72 @@ public class AuthServiceImpl implements AuthService {
       User user = userRepository.findByEmail(loginRequest.getEmail().toLowerCase())
                                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
+      if (!user.isEnabled()) {
+         throw new IllegalStateException("User account is disabled");
+      }
+      log.info("Login password {} " , loginRequest.getPassword());
+      log.info("User password {} ", user.getPassword());
       if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
          throw new InvalidCredentialsException("Invalid email or password");
       }
 
       String accessToken = jwtUtil.generateToken(user);
       String refreshToken = jwtUtil.generateRefreshToken(user);
+
       storeRefreshToken(refreshToken, user.getId());
+
       log.info("User logged in successfully: {}", user.getEmail());
+
       return LoginResponse.builder()
                           .token(accessToken)
                           .refreshToken(refreshToken)
-                          .message("Success")
+                          .role(user.getRole())
+                          .schoolId(user.getSchoolId())
+                          .forcePasswordChange(user.isForcePasswordChange())
+                          .message(user.isForcePasswordChange()
+                                   ? "Password change required"
+                                   : "Login successful")
                           .build();
    }
 
+   @Override
+   public void changePassword(ChangePasswordRequest request) {
+      // 1. Get current userId from JWT
+      String userId = jwtContextService.getUserId();
+      User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+      // 3. Verify old password
+      if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+         throw new InvalidCredentialsException("Old password is incorrect");
+      }
+
+      // 4. Prevent password reuse (optional but good)
+      if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+         throw new IllegalArgumentException("New password cannot be same as old password");
+      }
+      // 5. Update password
+      user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+      // 6. Clear forcePasswordChange flag
+      user.setForcePasswordChange(false);
+
+      userRepository.save(user);
+
+      log.info("Password changed successfully for userId={}", userId);
+   }
+
+   @Override
    public LoginResponse generateRefreshToken(String refreshToken,String ip) {
+
+      Claims claims;
+      try {
+         claims = jwtUtil.parseToken(refreshToken);
+      }
+      catch (Exception e) {
+         throw new InvalidTokenException("Invalid refresh token");
+      }
+      String userIdFromToken = claims.getSubject();
       String hashed = HashUtil.sha256(refreshToken);
       String key = "refresh:" + hashed;
       String userId = redisTemplate.opsForValue().get(key);
@@ -80,20 +163,30 @@ public class AuthServiceImpl implements AuthService {
       if (userId == null) {
          throw new InvalidTokenException("Invalid or expired refresh token");
       }
+
       if (!rateLimitService.isAllowed("refresh:user:" + userId + ":ip:" + ip, 10, Duration.ofMinutes(1))) {
          return LoginResponse.builder().message("Too many refresh attempts.").build();
       }
+
       redisTemplate.delete(key);
+
       User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new UserNotFoundException("User not found"));
+      if (!user.isEnabled()) {
+         throw new IllegalStateException("User account is disabled");
+      }
 
       String newAccessToken = jwtUtil.generateToken(user);
       String newRefreshToken = jwtUtil.generateRefreshToken(user);
+
       storeRefreshToken(newRefreshToken, userId);
       log.info("Tokens refreshed for user: {}", user.getEmail());
       return LoginResponse.builder()
                           .token(newAccessToken)
                           .refreshToken(newRefreshToken)
+                          .role(user.getRole())
+                          .schoolId(user.getSchoolId())
+                          .forcePasswordChange(user.isForcePasswordChange())
                           .message("Success")
                           .build();
    }
@@ -101,11 +194,23 @@ public class AuthServiceImpl implements AuthService {
    @Override
    public void logout(String accessToken, String refreshToken) {
 
-      long ttl = jwtUtil.getRemainingValidity(accessToken);
-      tokenBlacklistService.blacklistToken(accessToken, ttl);
+      if (accessToken != null && !accessToken.isBlank()) {
+         long ttl = jwtUtil.getRemainingValidity(accessToken);
+
+         if (ttl > 0) {
+            tokenBlacklistService.blacklistToken(accessToken, ttl);
+         }
+      }
 
       if (refreshToken != null && !refreshToken.isBlank()) {
          redisTemplate.delete("refresh:" + HashUtil.sha256(refreshToken));
+         // optional: short blacklist to prevent race reuse
+         redisTemplate.opsForValue().set(
+            "blacklist:refresh:" + HashUtil.sha256(refreshToken),
+            "true",
+            1,
+            TimeUnit.MINUTES
+         );
       }
    }
 
@@ -117,5 +222,54 @@ public class AuthServiceImpl implements AuthService {
          TimeUnit.DAYS
       );
    }
+
+   @Override
+   public void forgotPassword(String email) {
+
+      userRepository.findByEmail(email.toLowerCase()).ifPresent(user -> {
+
+         String rawToken = UUID.randomUUID().toString();
+         String hashedToken = HashUtil.sha256(rawToken);
+
+         String key = "pwd-reset:" + hashedToken;
+
+         redisTemplate.opsForValue().set(
+            key,
+            user.getId(),
+            15,
+            TimeUnit.MINUTES
+         );
+
+         // 🔔 Stub (replace with real email later)
+         log.info("Password reset token for {} : {}", email, rawToken);
+
+         // Later:
+         // notificationService.sendPasswordReset(email, rawToken);
+      });
+   }
+
+   @Override
+   public void resetPassword(ResetPasswordRequest request) {
+
+      String hashed = HashUtil.sha256(request.getToken());
+      String key = "pwd-reset:" + hashed;
+
+      String userId = redisTemplate.opsForValue().get(key);
+      if (userId == null) {
+         throw new InvalidTokenException("Invalid or expired reset token");
+      }
+
+      User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+      user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+      user.setForcePasswordChange(false); // important
+      userRepository.save(user);
+
+      redisTemplate.delete(key);
+
+      log.info("Password reset completed for user {}", user.getEmail());
+   }
+
 
 }

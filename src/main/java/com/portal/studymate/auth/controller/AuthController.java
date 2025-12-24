@@ -1,9 +1,12 @@
 package com.portal.studymate.auth.controller;
 
+import com.portal.studymate.auth.dtos.ChangePasswordRequest;
+import com.portal.studymate.auth.dtos.ForgotPasswordRequest;
 import com.portal.studymate.auth.dtos.LoginRequest;
 import com.portal.studymate.auth.dtos.LoginResponse;
 import com.portal.studymate.auth.dtos.LogoutRequest;
 import com.portal.studymate.auth.dtos.RefreshTokenRequest;
+import com.portal.studymate.auth.dtos.ResetPasswordRequest;
 import com.portal.studymate.auth.dtos.SignupRequest;
 import com.portal.studymate.auth.service.AuthService;
 import com.portal.studymate.auth.service.RateLimitService;
@@ -32,13 +35,6 @@ public class AuthController {
    private final RateLimitService rateLimitService;
    private final JwtUtil jwtUtil;
 
-   @PreAuthorize("hasRole('ADMIN')")
-   @PostMapping("/signup")
-   public ResponseEntity<String> signup(@Valid @RequestBody SignupRequest req) {
-      authService.signup(req);
-      return ResponseEntity.ok("User registered successfully");
-   }
-
    @PostMapping("/login")
    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req, HttpServletRequest servletRequest) {
       String ipAddress = servletRequest.getRemoteAddr();
@@ -47,12 +43,23 @@ public class AuthController {
                    .status(HttpStatus.TOO_MANY_REQUESTS)
                    .body(LoginResponse.builder().message("Too many login attempts. Please try again later.").build());
       }
+      req.setIpAddress(ipAddress);
       return ResponseEntity.ok(authService.login(req));
    }
 
+   @PreAuthorize("isAuthenticated()")
+   @PostMapping("/change-password")
+   public ResponseEntity<String> changePassword(
+      @Valid @RequestBody ChangePasswordRequest request) {
+
+      authService.changePassword(request);
+      return ResponseEntity.ok("Password changed successfully");
+   }
+
+
    @PostMapping("/logout")
    public ResponseEntity<String> logout(
-      @RequestHeader("Authorization") String authHeader,
+      @RequestHeader(value = "Authorization" , required = false) String authHeader ,
       @Valid @RequestBody LogoutRequest request) {
 
       if (!authHeader.startsWith("Bearer ")) {
@@ -71,8 +78,38 @@ public class AuthController {
    @PostMapping("/refresh-token")
    public ResponseEntity<LoginResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request,HttpServletRequest servletRequest) {
       String ip = servletRequest.getRemoteAddr();
+      if (!rateLimitService.isAllowed(
+         "refresh:ip:" + ip,
+         10,
+         Duration.ofMinutes(1))) {
+
+         return ResponseEntity
+                   .status(HttpStatus.TOO_MANY_REQUESTS)
+                   .body(LoginResponse.builder()
+                                      .message("Too many refresh attempts. Try again later.")
+                                      .build());
+      }
       return ResponseEntity.ok(
          authService.generateRefreshToken(request.getRefreshToken(), ip)
       );
    }
+
+   @PostMapping("/forgot-password")
+   public ResponseEntity<String> forgotPassword(
+      @Valid @RequestBody ForgotPasswordRequest request) {
+
+      authService.forgotPassword(request.getEmail());
+      return ResponseEntity.ok(
+         "If the email exists, password reset instructions have been sent"
+      );
+   }
+   @PostMapping("/reset-password")
+   public ResponseEntity<String> resetPassword(
+      @Valid @RequestBody ResetPasswordRequest request) {
+
+      authService.resetPassword(request);
+      return ResponseEntity.ok("Password reset successful");
+   }
+
+
 }
