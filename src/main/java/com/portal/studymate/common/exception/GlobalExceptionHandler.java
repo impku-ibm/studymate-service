@@ -98,34 +98,14 @@ public class GlobalExceptionHandler {
         public String getMessage() { return message; }
     }
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiErrorResponse> handleConstraint(
-       ConstraintViolationException ex,
-       HttpServletRequest request
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusiness(
+       BusinessException ex
     ) {
-        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+        log.warn("Business exception: {}", ex.getMessage());
+        return ResponseEntity
+                  .badRequest()
+                  .body(new ErrorResponse(ex.getCode(), ex.getMessage()));
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
-       IllegalArgumentException ex,
-       HttpServletRequest request
-    ) {
-        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
-    }
-
-    private ResponseEntity<ApiErrorResponse> build(
-       HttpStatus status,
-       String message,
-       HttpServletRequest request
-    ) {
-        return ResponseEntity.status(status)
-                             .body(new ApiErrorResponse(
-                                Instant.now(),
-                                status.value(),
-                                status.getReasonPhrase(),
-                                message,
-                                request.getRequestURI()
-                             ));
-    }
 }
