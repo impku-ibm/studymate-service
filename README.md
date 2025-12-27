@@ -108,14 +108,14 @@ JWT_EXPIRATION=3600000
 ```bash
 curl -X POST http://localhost:8080/auth/signup \
   -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password123"}'
+  -d '{"email":"schoolmodule@example.com","password":"password123"}'
 ```
 
 ### Login
 ```bash
 curl -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password123"}'
+  -d '{"email":"schoolmodule@example.com","password":"password123"}'
 ```
 
 ### Access Protected Route

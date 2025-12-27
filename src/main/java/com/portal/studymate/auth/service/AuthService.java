@@ -21,4 +21,6 @@ public interface AuthService {
    void forgotPassword(@Email @NotBlank String email);
 
    void resetPassword(@Valid ResetPasswordRequest request);
+
+   void createTeacherUser(String email, String fullName, String phone, String schoolId);
 }

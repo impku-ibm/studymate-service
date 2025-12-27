@@ -16,7 +16,7 @@ public class JwtContextService {
                                .getAuthentication();
 
       if (auth == null || !auth.isAuthenticated()) {
-         throw new IllegalStateException("No authenticated user");
+         throw new IllegalStateException("No authenticated schoolmodule");
       }
       return auth;
    }

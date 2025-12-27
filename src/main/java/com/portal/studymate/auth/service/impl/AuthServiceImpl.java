@@ -17,8 +17,8 @@ import com.portal.studymate.common.jwt.JwtUtil;
 import com.portal.studymate.common.util.HashUtil;
 import com.portal.studymate.common.util.PasswordGenerator;
 import com.portal.studymate.common.util.Role;
-import com.portal.studymate.user.model.User;
-import com.portal.studymate.user.repository.UserRepository;
+import com.portal.studymate.schoolmodule.model.User;
+import com.portal.studymate.schoolmodule.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
       }
 
       if (request.getRole() == Role.ADMIN) {
-         throw new IllegalArgumentException("Admin user cannot be created via signup");
+         throw new IllegalArgumentException("Admin schoolmodule cannot be created via signup");
       }
       String schoolId = jwtContextService.getSchoolId();
       String tempPassword = PasswordGenerator.generate();
@@ -164,7 +164,7 @@ public class AuthServiceImpl implements AuthService {
          throw new InvalidTokenException("Invalid or expired refresh token");
       }
 
-      if (!rateLimitService.isAllowed("refresh:user:" + userId + ":ip:" + ip, 10, Duration.ofMinutes(1))) {
+      if (!rateLimitService.isAllowed("refresh:schoolmodule:" + userId + ":ip:" + ip, 10, Duration.ofMinutes(1))) {
          return LoginResponse.builder().message("Too many refresh attempts.").build();
       }
 
@@ -180,7 +180,7 @@ public class AuthServiceImpl implements AuthService {
       String newRefreshToken = jwtUtil.generateRefreshToken(user);
 
       storeRefreshToken(newRefreshToken, userId);
-      log.info("Tokens refreshed for user: {}", user.getEmail());
+      log.info("Tokens refreshed for schoolmodule: {}", user.getEmail());
       return LoginResponse.builder()
                           .token(newAccessToken)
                           .refreshToken(newRefreshToken)
@@ -268,7 +268,46 @@ public class AuthServiceImpl implements AuthService {
 
       redisTemplate.delete(key);
 
-      log.info("Password reset completed for user {}", user.getEmail());
+      log.info("Password reset completed for schoolmodule {}", user.getEmail());
+   }
+
+   @Override
+   public void createTeacherUser(
+      String email,
+      String fullName,
+      String phone,
+      String schoolId
+   ) {
+
+      // 1. Email already exists?
+      if (userRepository.findByEmail(email.toLowerCase()).isPresent()) {
+         throw new UserAlreadyExistsException("User already exists with email " + email);
+      }
+
+      // 2. Generate temp password
+      String tempPassword = PasswordGenerator.generate();
+
+      // 3. Create user (Mongo)
+      User user = User.builder()
+                      .email(email.toLowerCase())
+                      .password(passwordEncoder.encode(tempPassword))
+                      .role(Role.TEACHER)
+                      .fullName(fullName)
+                      .phoneNumber(phone)
+                      .schoolId(schoolId)
+                      .enabled(true)
+                      .forcePasswordChange(true)
+                      .build();
+
+      userRepository.save(user);
+
+      // 4. Notify teacher
+//      notificationService.sendUserCredentials(
+//         email,
+//         tempPassword
+//      );
+
+      log.info("Teacher login created for {} in school {}", email, schoolId);
    }
 
 
