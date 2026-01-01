@@ -1,6 +1,6 @@
 package com.portal.studymate.common.jwt;
 
-import com.portal.studymate.schoolmodule.model.User;
+import com.portal.studymate.auth.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

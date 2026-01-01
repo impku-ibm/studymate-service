@@ -2,6 +2,10 @@ spring:
   application:
     name: School Application Portal
 
+#server:
+#  servlet:
+#    context-path:
+  port: 8080
 #    redis:
 #      host: localhost
 #      port: 6379

@@ -5,20 +5,20 @@ import com.portal.studymate.auth.dtos.LoginRequest;
 import com.portal.studymate.auth.dtos.LoginResponse;
 import com.portal.studymate.auth.dtos.ResetPasswordRequest;
 import com.portal.studymate.auth.dtos.SignupRequest;
+import com.portal.studymate.auth.exception.InvalidCredentialsException;
+import com.portal.studymate.auth.exception.InvalidTokenException;
+import com.portal.studymate.auth.exception.UserAlreadyExistsException;
+import com.portal.studymate.auth.exception.UserNotFoundException;
 import com.portal.studymate.auth.service.AuthService;
 import com.portal.studymate.auth.service.RateLimitService;
 import com.portal.studymate.auth.service.TokenBlacklistService;
-import com.portal.studymate.common.exception.InvalidCredentialsException;
-import com.portal.studymate.common.exception.InvalidTokenException;
-import com.portal.studymate.common.exception.UserAlreadyExistsException;
-import com.portal.studymate.common.exception.UserNotFoundException;
 import com.portal.studymate.common.jwt.JwtContextService;
 import com.portal.studymate.common.jwt.JwtUtil;
 import com.portal.studymate.common.util.HashUtil;
 import com.portal.studymate.common.util.PasswordGenerator;
 import com.portal.studymate.common.util.Role;
-import com.portal.studymate.schoolmodule.model.User;
-import com.portal.studymate.schoolmodule.repository.UserRepository;
+import com.portal.studymate.auth.model.User;
+import com.portal.studymate.auth.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,8 +93,7 @@ public class AuthServiceImpl implements AuthService {
       if (!user.isEnabled()) {
          throw new IllegalStateException("User account is disabled");
       }
-      log.info("Login password {} " , loginRequest.getPassword());
-      log.info("User password {} ", user.getPassword());
+
       if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
          throw new InvalidCredentialsException("Invalid email or password");
       }
@@ -272,7 +271,7 @@ public class AuthServiceImpl implements AuthService {
    }
 
    @Override
-   public void createTeacherUser(
+   public String createTeacherUser(
       String email,
       String fullName,
       String phone,
@@ -308,6 +307,7 @@ public class AuthServiceImpl implements AuthService {
 //      );
 
       log.info("Teacher login created for {} in school {}", email, schoolId);
+      return user.getId();
    }
 
 
