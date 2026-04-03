@@ -11,11 +11,13 @@ import com.portal.studymate.teachermgmt.model.Teacher;
 import com.portal.studymate.teachermgmt.repository.TeacherRepository;
 import com.portal.studymate.teachermgmt.service.TeacherService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -26,6 +28,7 @@ public class TeacherServiceImpl implements TeacherService {
 
    @Override
    public TeacherResponse createTeacher(CreateTeacherRequest req) {
+      log.info("createTeacher called - email: {}", req.getEmail());
 
       School school = SchoolContext.getSchool();
       String schoolCode = school.getSchoolCode();
@@ -65,6 +68,7 @@ public class TeacherServiceImpl implements TeacherService {
    @Override
    @Transactional(readOnly = true)
    public List<TeacherResponse> getAllTeachers() {
+      log.info("getAllTeachers called");
 
       School school = SchoolContext.getSchool();
 
@@ -76,12 +80,12 @@ public class TeacherServiceImpl implements TeacherService {
 
    @Override
    public TeacherResponse updateTeacher(Long teacherId, UpdateTeacherRequest req) {
+      log.info("updateTeacher called - teacherId: {}", teacherId);
 
       Teacher teacher = teacherRepository.findById(teacherId)
                                          .orElseThrow(() ->
                                                          new ResourceNotFoundException(
-                                                            "TEACHER_NOT_FOUND",
-                                                            "Teacher not found"
+                                                            "TEACHER_NOT_FOUND"
                                                          )
                                          );
 

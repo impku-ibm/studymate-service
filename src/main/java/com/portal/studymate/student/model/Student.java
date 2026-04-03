@@ -61,5 +61,8 @@ public class Student {
 
    @Enumerated(EnumType.STRING)
    private StudentStatus status;
+
+   @Column(name = "fee_plan_id")
+   private Long feePlanId;
 }
 

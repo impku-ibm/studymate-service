@@ -19,11 +19,13 @@ import com.portal.studymate.teacherassignment.service.TeacherAssignmentService;
 import com.portal.studymate.teachermgmt.model.Teacher;
 import com.portal.studymate.teachermgmt.repository.TeacherRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -40,6 +42,7 @@ public class TeacherAssignmentServiceImpl
    public TeacherAssignmentResponse assignTeacher(
       CreateTeacherAssignmentRequest req
    ) {
+      log.info("assignTeacher called - teacherId: {}, subjectId: {}, sectionId: {}", req.getTeacherId(), req.getSubjectId(), req.getSectionId());
 
       School school = SchoolContext.getSchool();
 
@@ -49,24 +52,21 @@ public class TeacherAssignmentServiceImpl
                school, AcademicYearStatus.ACTIVE)
             .orElseThrow(() ->
                             new ResourceNotFoundException(
-                               "ACTIVE_ACADEMIC_YEAR_NOT_FOUND",
-                               "No active academic year"
+                               "ACTIVE_ACADEMIC_YEAR_NOT_FOUND"
                             )
             );
 
       Teacher teacher = teacherRepository.findById(req.getTeacherId())
                                          .orElseThrow(() ->
                                                          new ResourceNotFoundException(
-                                                            "TEACHER_NOT_FOUND",
-                                                            "Teacher not found"
+                                                            "TEACHER_NOT_FOUND"
                                                          )
                                          );
 
       Subject subject = subjectRepository.findById(req.getSubjectId())
                                          .orElseThrow(() ->
                                                          new ResourceNotFoundException(
-                                                            "SUBJECT_NOT_FOUND",
-                                                            "Subject not found"
+                                                            "SUBJECT_NOT_FOUND"
                                                          )
                                          );
 
@@ -74,8 +74,7 @@ public class TeacherAssignmentServiceImpl
          sectionRepository.findById(req.getSectionId())
                           .orElseThrow(() ->
                                           new ResourceNotFoundException(
-                                             "SECTION_NOT_FOUND",
-                                             "Section not found"
+                                             "SECTION_NOT_FOUND"
                                           )
                           );
 
@@ -110,6 +109,7 @@ public class TeacherAssignmentServiceImpl
    @Transactional(readOnly = true)
    public List<TeacherAssignmentResponse>
    getAssignmentsForSection(Long sectionId) {
+      log.info("getAssignmentsForSection called - sectionId: {}", sectionId);
 
       School school = SchoolContext.getSchool();
 
@@ -119,8 +119,7 @@ public class TeacherAssignmentServiceImpl
                school, AcademicYearStatus.ACTIVE)
             .orElseThrow(() ->
                             new ResourceNotFoundException(
-                               "ACTIVE_ACADEMIC_YEAR_NOT_FOUND",
-                               "No active academic year"
+                               "ACTIVE_ACADEMIC_YEAR_NOT_FOUND"
                             )
             );
 
@@ -137,6 +136,7 @@ public class TeacherAssignmentServiceImpl
    @Transactional(readOnly = true)
    public List<TeacherAssignmentResponse>
    getAssignmentsForTeacher() {
+      log.info("getAssignmentsForTeacher called");
 
       String userId =
          (String) org.springframework.security
@@ -149,8 +149,7 @@ public class TeacherAssignmentServiceImpl
          teacherRepository.findByUserId(userId)
                           .orElseThrow(() ->
                                           new ResourceNotFoundException(
-                                             "TEACHER_PROFILE_NOT_FOUND",
-                                             "Teacher profile not found"
+                                             "TEACHER_PROFILE_NOT_FOUND"
                                           )
                           );
 

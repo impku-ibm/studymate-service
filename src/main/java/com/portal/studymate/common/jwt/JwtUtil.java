@@ -39,6 +39,7 @@ public class JwtUtil {
                  .setSubject(user.getId())
                  .setIssuer("studymate")
                  .claim("email", user.getEmail())
+                 .claim("fullName", user.getFullName())
                  .claim("role", user.getRole().name())
                  .claim("schoolId", user.getSchoolId())
                  .setIssuedAt(new Date())

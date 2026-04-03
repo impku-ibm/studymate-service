@@ -11,11 +11,13 @@ import com.portal.studymate.subject.model.Subject;
 import com.portal.studymate.subject.repository.SubjectRepository;
 import com.portal.studymate.subject.service.SubjectService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -25,6 +27,7 @@ public class SubjectServiceImpl implements SubjectService {
 
    @Override
    public SubjectResponse createSubject(CreateSubjectRequest request) {
+      log.info("createSubject called - name: {}, code: {}", request.getName(), request.getCode());
 
       School school = SchoolContext.getSchool();
 
@@ -49,6 +52,7 @@ public class SubjectServiceImpl implements SubjectService {
    @Override
    @Transactional(readOnly = true)
    public List<SubjectResponse> getAllSubjects() {
+      log.info("getAllSubjects called");
 
       School school = SchoolContext.getSchool();
 
@@ -60,12 +64,12 @@ public class SubjectServiceImpl implements SubjectService {
 
    @Override
    public SubjectResponse updateSubject(Long subjectId, UpdateSubjectRequest request) {
+      log.info("updateSubject called - subjectId: {}", subjectId);
 
       Subject subject = subjectRepository.findById(subjectId)
                                          .orElseThrow(() ->
                                                          new ResourceNotFoundException(
-                                                            "SUBJECT_NOT_FOUND",
-                                                            "Subject not found"
+                                                            "SUBJECT_NOT_FOUND"
                                                          )
                                          );
 

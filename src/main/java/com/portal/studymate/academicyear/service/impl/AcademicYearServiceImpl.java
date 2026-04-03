@@ -11,11 +11,13 @@ import com.portal.studymate.common.exception.ConflictException;
 import com.portal.studymate.common.exception.ResourceNotFoundException;
 import com.portal.studymate.school.model.School;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,13 +30,13 @@ public class AcademicYearServiceImpl implements AcademicYearService {
    // =========================
    @Override
    public AcademicYearResponse createAcademicYear(CreateAcademicYearRequest request) {
+      log.info("createAcademicYear called - startYear: {}", request.getStartYear());
 
       School school = SchoolContext.getSchool();
 
       if (school == null) {
          throw new ResourceNotFoundException(
-            "SCHOOL_NOT_FOUND",
-            "School context not available"
+            "SCHOOL_NOT_FOUND"
          );
       }
 
@@ -77,6 +79,7 @@ public class AcademicYearServiceImpl implements AcademicYearService {
    @Override
    @Transactional(readOnly = true)
    public AcademicYearResponse getActiveAcademicYear() {
+      log.info("getActiveAcademicYear called");
 
       School school = SchoolContext.getSchool();
 
@@ -85,8 +88,7 @@ public class AcademicYearServiceImpl implements AcademicYearService {
                 .map(this::toResponse)
                 .orElseThrow(() ->
                                 new ResourceNotFoundException(
-                                   "ACTIVE_ACADEMIC_YEAR_NOT_FOUND",
-                                   "No active academic year configured"
+                                   "ACTIVE_ACADEMIC_YEAR_NOT_FOUND"
                                 )
                 );
    }
@@ -97,6 +99,7 @@ public class AcademicYearServiceImpl implements AcademicYearService {
    @Override
    @Transactional(readOnly = true)
    public List<AcademicYearResponse> getAllAcademicYears() {
+      log.info("getAllAcademicYears called");
 
       School school = SchoolContext.getSchool();
 
@@ -116,5 +119,32 @@ public class AcademicYearServiceImpl implements AcademicYearService {
                                  .year(ay.getYear())
                                  .status(ay.getStatus().name())
                                  .build();
+   }
+
+   // =========================
+   // ACTIVATE ACADEMIC YEAR
+   // =========================
+   @Override
+   public AcademicYearResponse activateAcademicYear(Long id) {
+      log.info("activateAcademicYear called - id: {}", id);
+      School school = SchoolContext.getSchool();
+
+      AcademicYear target = academicYearRepository.findById(id)
+         .orElseThrow(() -> new ResourceNotFoundException("ACADEMIC_YEAR_NOT_FOUND"));
+
+      // Deactivate current active year
+      academicYearRepository.findBySchoolAndStatus(school, AcademicYearStatus.ACTIVE)
+         .ifPresent(active -> {
+            active.setStatus(AcademicYearStatus.COMPLETED);
+            active.setActive(false);
+            academicYearRepository.save(active);
+         });
+
+      // Activate the target year
+      target.setStatus(AcademicYearStatus.ACTIVE);
+      target.setActive(true);
+      AcademicYear saved = academicYearRepository.save(target);
+
+      return toResponse(saved);
    }
 }

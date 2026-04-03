@@ -1,47 +1,54 @@
+# Build
+build/
+out/
+*.class
+*.jar
+*.war
+
 # Gradle
 .gradle/
-build/
 !gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
-application-local.yml
 
 # IDE
 .idea/
-*.iws
 *.iml
 *.ipr
-out/
+*.iws
 .vscode/
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Java
-*.class
-*.log
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# Spring Boot
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-# Environment variables
+# Environment & Secrets
 .env
-
-# Docker
-docker-compose.override.yml
+*.env.local
+*.env.production
 
 # Logs
 logs/
 *.log
-src/main/resources/logback-spring.xml
+
+# Temporary files
+wipe-db.java
+seed-mongo.js
+bootrun-error.txt
+
+# Documentation (generated, not needed in repo)
+DELIVERY_SUMMARY.md
+DOCUMENTATION_INDEX.md
+FILE_LISTING.md
+IMPLEMENTATION_SUMMARY.md
+UI_COMPONENT_SPECS.md
+UI_FLOW_DIAGRAMS.md
+UI_INTEGRATION_COMPLETE.md
+UI_QUICK_START.md
+VISUAL_REFERENCE.md
+project_review_summary.md
+README_START_HERE.md
+
+# Local config with credentials (use env vars in production)
+src/main/resources/application-local.yaml

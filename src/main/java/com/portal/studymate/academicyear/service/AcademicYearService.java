@@ -11,4 +11,6 @@ public interface AcademicYearService {
    AcademicYearResponse getActiveAcademicYear();
 
    List<AcademicYearResponse> getAllAcademicYears();
+
+   AcademicYearResponse activateAcademicYear(Long id);
 }

@@ -2,7 +2,7 @@ package com.portal.studymate.common.exception;
 
 public class ResourceNotFoundException extends BusinessException {
 
-   public ResourceNotFoundException(String code, String message) {
-      super(code, message);
+   public ResourceNotFoundException(String message) {
+      super("RESOURCE_NOT_FOUND", message);
    }
 }

@@ -11,11 +11,13 @@ import com.portal.studymate.student.model.StudentStatus;
 import com.portal.studymate.student.repository.StudentRepository;
 import com.portal.studymate.student.service.StudentService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -27,6 +29,7 @@ public class StudentServiceImpl implements StudentService {
 
    @Override
    public StudentResponse createStudent(CreateStudentRequest req) {
+      log.info("createStudent called - name: {}", req.getFullName());
 
       School school = schoolContext.getSchool();
 
@@ -54,12 +57,14 @@ public class StudentServiceImpl implements StudentService {
 
    @Override
    public List<StudentResponse> getAllStudents() {
+      log.info("getAllStudents called");
       return studentRepository.findBySchool(schoolContext.getSchool())
                               .stream().map(this::map).toList();
    }
 
    @Override
    public StudentResponse updateStudent(Long id, UpdateStudentRequest req) {
+      log.info("updateStudent called - id: {}", id);
 
       Student student = studentRepository.findById(id)
                                          .orElseThrow(() -> new RuntimeException("Student not found"));

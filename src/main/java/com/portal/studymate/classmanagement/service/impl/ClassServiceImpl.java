@@ -11,11 +11,13 @@ import com.portal.studymate.common.exception.ConflictException;
 import com.portal.studymate.common.exception.ResourceNotFoundException;
 import com.portal.studymate.school.model.School;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -25,6 +27,7 @@ public class ClassServiceImpl implements ClassService {
 
    @Override
    public ClassResponse createClass(CreateClassRequest request) {
+      log.info("createClass called - name: {}", request.getName());
 
       School school = SchoolContext.getSchool();
 
@@ -48,6 +51,7 @@ public class ClassServiceImpl implements ClassService {
    @Override
    @Transactional(readOnly = true)
    public List<ClassResponse> getAllClasses() {
+      log.info("getAllClasses called");
 
       School school = SchoolContext.getSchool();
 
@@ -59,12 +63,12 @@ public class ClassServiceImpl implements ClassService {
 
    @Override
    public ClassResponse updateClass(Long classId, UpdateClassRequest request) {
+      log.info("updateClass called - classId: {}", classId);
 
       SchoolClass schoolClass = classRepository.findById(classId)
                                                .orElseThrow(() ->
                                                                new ResourceNotFoundException(
-                                                                  "CLASS_NOT_FOUND",
-                                                                  "Class not found"
+                                                                  "CLASS_NOT_FOUND"
                                                                )
                                                );
 

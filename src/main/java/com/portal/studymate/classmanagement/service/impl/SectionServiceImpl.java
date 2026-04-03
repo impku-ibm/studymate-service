@@ -11,11 +11,13 @@ import com.portal.studymate.classmanagement.service.SectionService;
 import com.portal.studymate.common.exception.ConflictException;
 import com.portal.studymate.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -26,12 +28,12 @@ public class SectionServiceImpl implements SectionService {
 
    @Override
    public SectionResponse createSection(Long classId, CreateSectionRequest request) {
+      log.info("createSection called - classId: {}, name: {}", classId, request.getName());
 
       SchoolClass schoolClass = classRepository.findById(classId)
                                                .orElseThrow(() ->
                                                                new ResourceNotFoundException(
-                                                                  "CLASS_NOT_FOUND",
-                                                                  "Class not found"
+                                                                  "CLASS_NOT_FOUND"
                                                                )
                                                );
 
@@ -56,12 +58,12 @@ public class SectionServiceImpl implements SectionService {
    @Override
    @Transactional(readOnly = true)
    public List<SectionResponse> getSectionsByClass(Long classId) {
+      log.info("getSectionsByClass called - classId: {}", classId);
 
       SchoolClass schoolClass = classRepository.findById(classId)
                                                .orElseThrow(() ->
                                                                new ResourceNotFoundException(
-                                                                  "CLASS_NOT_FOUND",
-                                                                  "Class not found"
+                                                                  "CLASS_NOT_FOUND"
                                                                )
                                                );
 
@@ -73,12 +75,12 @@ public class SectionServiceImpl implements SectionService {
 
    @Override
    public SectionResponse updateSection(Long sectionId, UpdateSectionRequest request) {
+      log.info("updateSection called - sectionId: {}", sectionId);
 
       ClassSectionTemplate section = sectionRepository.findById(sectionId)
                                                       .orElseThrow(() ->
                                                                       new ResourceNotFoundException(
-                                                                         "SECTION_NOT_FOUND",
-                                                                         "Section not found"
+                                                                         "SECTION_NOT_FOUND"
                                                                       )
                                                       );
 

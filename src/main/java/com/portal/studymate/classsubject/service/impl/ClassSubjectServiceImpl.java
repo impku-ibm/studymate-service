@@ -16,12 +16,14 @@ import com.portal.studymate.school.model.School;
 import com.portal.studymate.subject.model.Subject;
 import com.portal.studymate.subject.repository.SubjectRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -34,6 +36,7 @@ public class ClassSubjectServiceImpl implements ClassSubjectService {
 
    @Override
    public List<ClassSubjectResponse> assignSubjects(AssignSubjectsRequest request) {
+      log.info("assignSubjects called - classId: {}, subjectCount: {}", request.getClassId(), request.getSubjectIds().size());
 
       School school = SchoolContext.getSchool();
 
@@ -41,16 +44,14 @@ public class ClassSubjectServiceImpl implements ClassSubjectService {
                                    .findBySchoolAndStatus(school, AcademicYearStatus.ACTIVE)
                                    .orElseThrow(() ->
                                                    new ResourceNotFoundException(
-                                                      "ACTIVE_ACADEMIC_YEAR_NOT_FOUND",
-                                                      "No active academic year"
+                                                      "ACTIVE_ACADEMIC_YEAR_NOT_FOUND"
                                                    )
                                    );
 
       SchoolClass schoolClass = classRepository.findById(request.getClassId())
                                                .orElseThrow(() ->
                                                                new ResourceNotFoundException(
-                                                                  "CLASS_NOT_FOUND",
-                                                                  "Class not found"
+                                                                  "CLASS_NOT_FOUND"
                                                                )
                                                );
 
@@ -61,8 +62,7 @@ public class ClassSubjectServiceImpl implements ClassSubjectService {
          Subject subject = subjectRepository.findById(subjectId)
                                             .orElseThrow(() ->
                                                             new ResourceNotFoundException(
-                                                               "SUBJECT_NOT_FOUND",
-                                                               "Subject not found"
+                                                               "SUBJECT_NOT_FOUND"
                                                             )
                                             );
 
@@ -89,6 +89,7 @@ public class ClassSubjectServiceImpl implements ClassSubjectService {
    @Override
    @Transactional(readOnly = true)
    public List<ClassSubjectResponse> getSubjectsForClass(Long classId) {
+      log.info("getSubjectsForClass called - classId: {}", classId);
 
       School school = SchoolContext.getSchool();
 
@@ -96,16 +97,14 @@ public class ClassSubjectServiceImpl implements ClassSubjectService {
                                    .findBySchoolAndStatus(school, AcademicYearStatus.ACTIVE)
                                    .orElseThrow(() ->
                                                    new ResourceNotFoundException(
-                                                      "ACTIVE_ACADEMIC_YEAR_NOT_FOUND",
-                                                      "No active academic year"
+                                                      "ACTIVE_ACADEMIC_YEAR_NOT_FOUND"
                                                    )
                                    );
 
       SchoolClass schoolClass = classRepository.findById(classId)
                                                .orElseThrow(() ->
                                                                new ResourceNotFoundException(
-                                                                  "CLASS_NOT_FOUND",
-                                                                  "Class not found"
+                                                                  "CLASS_NOT_FOUND"
                                                                )
                                                );
 

@@ -3,7 +3,6 @@ package com.portal.studymate.common.jwt;
 import com.portal.studymate.auth.service.TokenBlacklistService;
 import com.portal.studymate.common.context.SchoolContext;
 import com.portal.studymate.common.exception.ResourceNotFoundException;
-import com.portal.studymate.common.util.HashUtil;
 import com.portal.studymate.school.model.School;
 import com.portal.studymate.school.repository.SchoolRepository;
 import io.jsonwebtoken.Claims;
@@ -76,8 +75,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                .findBySchoolCodeAndActiveTrue(schoolCode)
                                .orElseThrow(() ->
                                                new ResourceNotFoundException(
-                                                  "SCHOOL_NOT_FOUND",
-                                                  "School not found for code: " + schoolCode
+                                                  "SCHOOL_NOT_FOUND"
                                                )
                                );
 

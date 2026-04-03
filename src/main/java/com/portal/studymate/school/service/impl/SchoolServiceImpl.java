@@ -10,9 +10,11 @@ import com.portal.studymate.school.model.School;
 import com.portal.studymate.school.repository.SchoolRepository;
 import com.portal.studymate.school.service.SchoolService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -26,13 +28,13 @@ public class SchoolServiceImpl implements SchoolService {
    @Override
    @Transactional(readOnly = true)
    public SchoolResponse getCurrentSchool() {
+      log.info("getCurrentSchool called");
 
       School school = SchoolContext.getSchool();
 
       if (school == null) {
          throw new ResourceNotFoundException(
-            "SCHOOL_NOT_FOUND",
-            "School context not available"
+            "SCHOOL_NOT_FOUND"
          );
       }
 
@@ -45,6 +47,7 @@ public class SchoolServiceImpl implements SchoolService {
    // =========================
    @Override
    public SchoolResponse createSchool(CreateSchoolRequest request) {
+      log.info("createSchool called - name: {}", request.getName());
 
       // Only one school allowed
       schoolRepository.findByActiveTrue().ifPresent(existing -> {
@@ -82,13 +85,13 @@ public class SchoolServiceImpl implements SchoolService {
    // =========================
    @Override
    public SchoolResponse updateSchool(UpdateSchoolRequest request) {
+      log.info("updateSchool called");
 
       School existing = SchoolContext.getSchool();
 
       if (existing == null) {
          throw new ResourceNotFoundException(
-            "SCHOOL_NOT_FOUND",
-            "School context not available"
+            "SCHOOL_NOT_FOUND"
          );
       }
 

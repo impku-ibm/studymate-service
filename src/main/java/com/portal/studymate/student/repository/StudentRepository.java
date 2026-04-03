@@ -14,4 +14,6 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
    Optional<Student> findByUserId(String userId);
 
    long countBySchool(School school);
+
+   List<Student> findBySchoolAndStatusNot(School school, com.portal.studymate.student.model.StudentStatus status);
 }

@@ -1,0 +1,70 @@
+package com.portal.studymate.accounts.controller;
+
+import com.portal.studymate.accounts.dtos.requests.CreateFeePlanRequest;
+import com.portal.studymate.accounts.dtos.responses.FeePlanResponse;
+import com.portal.studymate.accounts.service.FeePlanService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/v1/accounts/fee-plans")
+@RequiredArgsConstructor
+@Tag(name = "Fee Plans", description = "Manage fee plans for student categories")
+public class FeePlanController {
+
+    private final FeePlanService feePlanService;
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create fee plan")
+    public ResponseEntity<FeePlanResponse> create(@Valid @RequestBody CreateFeePlanRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(feePlanService.createFeePlan(request));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCOUNTANT')")
+    @Operation(summary = "Get all fee plans")
+    public ResponseEntity<List<FeePlanResponse>> getAll() {
+        return ResponseEntity.ok(feePlanService.getFeePlans());
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCOUNTANT')")
+    @Operation(summary = "Get fee plan by ID")
+    public ResponseEntity<FeePlanResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(feePlanService.getFeePlan(id));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete fee plan")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        feePlanService.deleteFeePlan(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/assign/{studentId}/{feePlanId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Assign fee plan to student")
+    public ResponseEntity<Void> assignToStudent(@PathVariable Long studentId, @PathVariable Long feePlanId) {
+        feePlanService.assignPlanToStudent(studentId, feePlanId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/student/{studentId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCOUNTANT')")
+    @Operation(summary = "Get student's fee plan")
+    public ResponseEntity<FeePlanResponse> getStudentPlan(@PathVariable Long studentId) {
+        return ResponseEntity.ok(feePlanService.getStudentPlan(studentId));
+    }
+}

@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,5 +42,11 @@ public class AcademicYearController {
    public ResponseEntity<AcademicYearResponse> getActiveAcademicYear(){
       log.info("Getting active academic year");
       return ResponseEntity.ok(service.getActiveAcademicYear());
+   }
+
+   @PatchMapping("/{id}/activate")
+   public ResponseEntity<AcademicYearResponse> activateAcademicYear(@PathVariable Long id) {
+      log.info("Activating academic year: {}", id);
+      return ResponseEntity.ok(service.activateAcademicYear(id));
    }
 }

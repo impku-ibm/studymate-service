@@ -11,10 +11,12 @@ import com.portal.studymate.school.service.DashboardService;
 import com.portal.studymate.student.repository.StudentRepository;
 import com.portal.studymate.teachermgmt.repository.TeacherRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
@@ -26,6 +28,7 @@ public class DashboardServiceImpl implements DashboardService {
 
    @Override
    public DashboardSummaryResponse getSummary() {
+      log.info("getSummary called");
 
       School school = SchoolContext.getSchool();
       if (school == null) {
