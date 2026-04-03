@@ -7,6 +7,7 @@ spring:
       uri: ${MONGODB_URI:mongodb://mongo:27017/studymate}
     redis:
       url: ${REDIS_URL:redis://localhost:6379}
+      client-name: ""
       timeout: 5000
 
   datasource:
