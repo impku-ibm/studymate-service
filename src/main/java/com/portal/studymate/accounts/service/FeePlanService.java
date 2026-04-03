@@ -25,6 +25,7 @@ public class FeePlanService {
 
     private final FeePlanRepository feePlanRepository;
     private final StudentRepository studentRepository;
+    private final FeeSchedulerService feeSchedulerService;
 
     public FeePlanResponse createFeePlan(CreateFeePlanRequest request) {
         log.info("createFeePlan called - name: {}", request.name());
@@ -82,6 +83,14 @@ public class FeePlanService {
             .orElseThrow(() -> new ResourceNotFoundException("Fee plan not found"));
         student.setFeePlanId(feePlanId);
         studentRepository.save(student);
+
+        // Auto-generate initial fees based on the plan
+        try {
+            int generated = feeSchedulerService.generateInitialFeesForStudent(studentId, feePlanId);
+            log.info("Auto-generated {} fee records for student {}", generated, studentId);
+        } catch (Exception e) {
+            log.warn("Fee generation failed for student {}: {}", studentId, e.getMessage());
+        }
     }
 
     @Transactional(readOnly = true)

@@ -1,5 +1,6 @@
 package com.portal.studymate.promotion.service;
 
+import com.portal.studymate.accounts.service.FeeSchedulerService;
 import com.portal.studymate.common.exception.ResourceNotFoundException;
 import com.portal.studymate.promotion.dto.BulkPromotionRequest;
 import com.portal.studymate.promotion.dto.PromotionResultResponse;
@@ -22,6 +23,7 @@ public class PromotionService {
 
     private final StudentEnrollmentService enrollmentService;
     private final StudentRepository studentRepository;
+    private final FeeSchedulerService feeSchedulerService;
 
     public PromotionResultResponse bulkPromote(BulkPromotionRequest request) {
         int promoted = 0;
@@ -37,11 +39,23 @@ public class PromotionService {
                 EnrollStudentRequest enrollReq = EnrollStudentRequest.builder()
                     .studentId(studentId)
                     .classId(request.targetClassId())
-                    .sectionId(null) // section handled by name
+                    .sectionId(null)
                     .rollNumber(rollNumber)
                     .build();
 
                 enrollmentService.enroll(enrollReq);
+
+                // Preserve fee plan — regenerate fees for new class after promotion
+                if (student.getFeePlanId() != null) {
+                    try {
+                        int generated = feeSchedulerService.generateInitialFeesForStudent(
+                            studentId, student.getFeePlanId());
+                        log.info("Generated {} fee records for promoted student {}", generated, studentId);
+                    } catch (Exception ex) {
+                        log.warn("Fee generation after promotion failed for student {}: {}", studentId, ex.getMessage());
+                    }
+                }
+
                 promoted++;
                 rollNumber++;
                 log.info("Promoted student {} to class {}", student.getFullName(), request.targetClassId());
@@ -52,6 +66,7 @@ public class PromotionService {
             }
         }
 
+        log.info("Bulk promotion complete: {} promoted, {} skipped", promoted, skipped);
         return new PromotionResultResponse(promoted, skipped, errors);
     }
 }
