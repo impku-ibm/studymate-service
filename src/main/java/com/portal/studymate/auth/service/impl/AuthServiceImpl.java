@@ -157,7 +157,13 @@ public class AuthServiceImpl implements AuthService {
       String userIdFromToken = claims.getSubject();
       String hashed = HashUtil.sha256(refreshToken);
       String key = "refresh:" + hashed;
-      String userId = redisTemplate.opsForValue().get(key);
+      String userId;
+      try {
+         userId = redisTemplate.opsForValue().get(key);
+      } catch (Exception e) {
+         log.warn("Redis unavailable for refresh token lookup");
+         userId = null;
+      }
 
       if (userId == null) {
          throw new InvalidTokenException("Invalid or expired refresh token");
@@ -167,7 +173,7 @@ public class AuthServiceImpl implements AuthService {
          return LoginResponse.builder().message("Too many refresh attempts.").build();
       }
 
-      redisTemplate.delete(key);
+      try { redisTemplate.delete(key); } catch (Exception e) { log.warn("Redis unavailable for key delete"); }
 
       User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -202,24 +208,31 @@ public class AuthServiceImpl implements AuthService {
       }
 
       if (refreshToken != null && !refreshToken.isBlank()) {
-         redisTemplate.delete("refresh:" + HashUtil.sha256(refreshToken));
-         // optional: short blacklist to prevent race reuse
-         redisTemplate.opsForValue().set(
-            "blacklist:refresh:" + HashUtil.sha256(refreshToken),
-            "true",
-            1,
-            TimeUnit.MINUTES
-         );
+         try {
+            redisTemplate.delete("refresh:" + HashUtil.sha256(refreshToken));
+            redisTemplate.opsForValue().set(
+               "blacklist:refresh:" + HashUtil.sha256(refreshToken),
+               "true",
+               1,
+               TimeUnit.MINUTES
+            );
+         } catch (Exception e) {
+            log.warn("Redis unavailable for logout token cleanup");
+         }
       }
    }
 
    private void storeRefreshToken(String token, String userId) {
-      redisTemplate.opsForValue().set(
-         "refresh:" + HashUtil.sha256(token),
-         userId,
-         7,
-         TimeUnit.DAYS
-      );
+      try {
+         redisTemplate.opsForValue().set(
+            "refresh:" + HashUtil.sha256(token),
+            userId,
+            7,
+            TimeUnit.DAYS
+         );
+      } catch (Exception e) {
+         log.warn("Redis unavailable, refresh token not stored");
+      }
    }
 
    @Override
@@ -232,12 +245,17 @@ public class AuthServiceImpl implements AuthService {
 
          String key = "pwd-reset:" + hashedToken;
 
-         redisTemplate.opsForValue().set(
-            key,
-            user.getId(),
-            15,
-            TimeUnit.MINUTES
-         );
+         try {
+            redisTemplate.opsForValue().set(
+               key,
+               user.getId(),
+               15,
+               TimeUnit.MINUTES
+            );
+         } catch (Exception e) {
+            log.warn("Redis unavailable, password reset token not stored");
+            return;
+         }
 
          // 🔔 Stub (replace with real email later)
          log.info("Password reset token for {} : {}", email, rawToken);
@@ -253,7 +271,12 @@ public class AuthServiceImpl implements AuthService {
       String hashed = HashUtil.sha256(request.getToken());
       String key = "pwd-reset:" + hashed;
 
-      String userId = redisTemplate.opsForValue().get(key);
+      String userId;
+      try {
+         userId = redisTemplate.opsForValue().get(key);
+      } catch (Exception e) {
+         throw new InvalidTokenException("Redis unavailable, cannot verify reset token");
+      }
       if (userId == null) {
          throw new InvalidTokenException("Invalid or expired reset token");
       }
@@ -265,7 +288,7 @@ public class AuthServiceImpl implements AuthService {
       user.setForcePasswordChange(false); // important
       userRepository.save(user);
 
-      redisTemplate.delete(key);
+      try { redisTemplate.delete(key); } catch (Exception e) { log.warn("Redis unavailable for reset token cleanup"); }
 
       log.info("Password reset completed for schoolmodule {}", user.getEmail());
    }
