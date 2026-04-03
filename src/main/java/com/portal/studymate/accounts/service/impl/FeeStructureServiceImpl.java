@@ -34,8 +34,13 @@ public class FeeStructureServiceImpl implements FeeStructureService {
 
    @Override
    public FeeStructureResponse createFeeStructure(CreateFeeStructureRequest request) {
-      log.info("createFeeStructure called - feeType: {}, classId: {}", request.feeType(), request.classId());
+      log.info("createFeeStructure called - feeType: {}, classId: {}, academicYearId: {}", 
+         request.feeType(), request.classId(), request.academicYearId());
       School school = SchoolContext.getSchool();
+      if (school == null) {
+         throw new com.portal.studymate.common.exception.BadRequestException(
+            "NO_SCHOOL_CONTEXT", "School context not available. Please re-login.");
+      }
       
       AcademicYear academicYear = academicYearRepository.findById(request.academicYearId())
          .orElseThrow(() -> new ResourceNotFoundException("Academic year not found"));
@@ -45,7 +50,8 @@ public class FeeStructureServiceImpl implements FeeStructureService {
 
       if (feeStructureRepository.findBySchoolAndAcademicYearAndSchoolClassAndFeeType(
             school, academicYear, schoolClass, request.feeType()).isPresent()) {
-         throw new RuntimeException("Fee structure already exists for this class and fee type");
+         throw new com.portal.studymate.common.exception.ConflictException(
+            "FEE_STRUCTURE_EXISTS", "Fee structure already exists for this class and fee type");
       }
 
       FeeStructure feeStructure = new FeeStructure();
@@ -78,6 +84,10 @@ public class FeeStructureServiceImpl implements FeeStructureService {
    public Page<FeeStructureResponse> getFeeStructures(Long academicYearId, Pageable pageable) {
       log.info("getFeeStructures called - academicYearId: {}", academicYearId);
       School school = SchoolContext.getSchool();
+      if (school == null) {
+         throw new com.portal.studymate.common.exception.BadRequestException(
+            "NO_SCHOOL_CONTEXT", "School context not available. Please re-login.");
+      }
       
       AcademicYear academicYear = academicYearRepository.findById(academicYearId)
          .orElseThrow(() -> new ResourceNotFoundException("Academic year not found"));
