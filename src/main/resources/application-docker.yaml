@@ -38,3 +38,12 @@ logging:
     com.portal.studymate: INFO
     org.springframework.security: WARN
     root: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  health:
+    redis:
+      enabled: false
