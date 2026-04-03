@@ -1,0 +1,26 @@
+# -------- BUILD STAGE --------
+FROM gradle:8.6-jdk21 AS build
+WORKDIR /app
+COPY build.gradle settings.gradle ./
+COPY gradle ./gradle
+# Cache dependencies
+RUN gradle dependencies --no-daemon || true
+COPY src ./src
+RUN gradle clean build -x test --no-daemon
+
+# -------- RUNTIME STAGE --------
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+# Add wget for healthcheck
+RUN apk add --no-cache wget
+
+COPY --from=build /app/build/libs/*.jar app.jar
+
+# Non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+EXPOSE 8080
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar --spring.profiles.active=docker"]
