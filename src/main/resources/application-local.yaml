@@ -1,11 +1,11 @@
 spring:
    data:
       mongodb:
-         uri: mongodb+srv://pankaj_unifocus:Qq4M0SEkN6xRHJj8@cluster0.eqazi0r.mongodb.net/studymate?appName=Cluster0
+         uri: ${MONGODB_URI:mongodb://localhost:27017/studymate}
    datasource:
-      url: jdbc:postgresql://ep-dawn-smoke-a1c3o9zg-pooler.ap-southeast-1.aws.neon.tech/studymate_user?sslmode=require&channel_binding=require
-      username: neondb_owner
-      password: npg_kdnJ04qZbugO
+      url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/studymate}
+      username: ${SPRING_DATASOURCE_USERNAME:postgres}
+      password: ${SPRING_DATASOURCE_PASSWORD:postgres}
       driver-class-name: org.postgresql.Driver
 
    jpa:
@@ -16,6 +16,5 @@ spring:
    flyway:
       enabled: true
       locations: classpath:db/migration
-      repair-on-migrate: true
       validate-on-migrate: false
       out-of-order: true

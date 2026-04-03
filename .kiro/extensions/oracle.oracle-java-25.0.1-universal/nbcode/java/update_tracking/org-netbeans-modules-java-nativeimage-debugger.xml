@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.java.nativeimage.debugger/0">
-    <module_version install_time="1768797524978" last="true" origin="installer" specification_version="0.19">
-        <file crc="3923054466" name="config/Modules/org-netbeans-modules-java-nativeimage-debugger.xml"/>
-        <file crc="69437879" name="modules/org-netbeans-modules-java-nativeimage-debugger.jar"/>
-    </module_version>
-</module>

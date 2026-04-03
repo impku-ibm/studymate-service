@@ -52,3 +52,9 @@ README_START_HERE.md
 
 # Local config with credentials (use env vars in production)
 src/main/resources/application-local.yaml
+
+# Kiro IDE extensions (large, not needed in repo)
+.kiro/extensions/
+.kiro/argv.json
+.kiro/logs/
+.kiro/settings/

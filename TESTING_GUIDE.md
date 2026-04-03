@@ -5,10 +5,10 @@
 Run this command to seed the admin and test users:
 
 ```bash
-mongosh "mongodb+srv://pankaj_unifocus:Qq4M0SEkN6xRHJj8@cluster0.eqazi0r.mongodb.net/studymate" seed-mongo.js
+mongosh "$MONGODB_URI" seed-mongo.js
 ```
 
-Or if you don't have mongosh, use MongoDB Compass to connect and manually insert the users.
+Or the app auto-seeds MongoDB users on startup (MongoDataSeeder.java).
 
 ## Step 2: Start Services
 
