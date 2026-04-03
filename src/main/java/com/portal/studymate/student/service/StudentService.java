@@ -12,6 +12,8 @@ public interface StudentService {
 
    List<StudentResponse> getAllStudents();
 
+   StudentResponse getStudentById(Long id);
+
    StudentResponse updateStudent(Long id, UpdateStudentRequest request);
 }
 

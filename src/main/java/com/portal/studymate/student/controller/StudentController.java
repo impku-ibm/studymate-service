@@ -37,6 +37,12 @@ public class StudentController {
       return studentService.getAllStudents();
    }
 
+   @GetMapping("/{id}")
+   public StudentResponse getById(@PathVariable Long id) {
+      log.info("GET /students/{} - Getting student details", id);
+      return studentService.getStudentById(id);
+   }
+
    @PutMapping("/{id}")
    public StudentResponse update(
       @PathVariable Long id,

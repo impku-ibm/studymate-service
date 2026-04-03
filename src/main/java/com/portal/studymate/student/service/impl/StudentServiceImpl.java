@@ -69,11 +69,23 @@ public class StudentServiceImpl implements StudentService {
       Student student = studentRepository.findById(id)
                                          .orElseThrow(() -> new RuntimeException("Student not found"));
 
-      student.setFullName(req.getFullName());
-      student.setAddress(req.getAddress());
-      student.setStatus(req.getStatus());
+      if (req.getFullName() != null) student.setFullName(req.getFullName());
+      if (req.getDateOfBirth() != null) student.setDateOfBirth(req.getDateOfBirth());
+      if (req.getParentName() != null) student.setParentName(req.getParentName());
+      if (req.getParentMobile() != null) student.setParentMobile(req.getParentMobile());
+      if (req.getAddress() != null) student.setAddress(req.getAddress());
+      if (req.getStatus() != null) student.setStatus(req.getStatus());
 
       return map(studentRepository.save(student));
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public StudentResponse getStudentById(Long id) {
+      log.info("getStudentById called - id: {}", id);
+      Student student = studentRepository.findById(id)
+                                         .orElseThrow(() -> new RuntimeException("Student not found"));
+      return map(student);
    }
 
    private StudentResponse map(Student s) {
@@ -81,8 +93,10 @@ public class StudentServiceImpl implements StudentService {
                             .id(s.getId())
                             .admissionNumber(s.getAdmissionNumber())
                             .fullName(s.getFullName())
+                            .dateOfBirth(s.getDateOfBirth())
                             .parentName(s.getParentName())
                             .parentMobile(s.getParentMobile())
+                            .address(s.getAddress())
                             .admissionDate(s.getAdmissionDate())
                             .status(s.getStatus())
                             .build();

@@ -15,6 +15,8 @@ public class StudentResponse {
    private String fullName;
    private String parentName;
    private String parentMobile;
+   private String address;
+   private LocalDate dateOfBirth;
    private LocalDate admissionDate;
    private StudentStatus status;
 }
