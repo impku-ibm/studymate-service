@@ -17,17 +17,26 @@ public class TokenBlacklistServiceImpl implements TokenBlacklistService {
    private final RedisTemplate<String, String> redisTemplate;
 
    public void blacklistToken(String token, long expirationMillis) {
-      redisTemplate.opsForValue().set(
-         "blacklist:access:" + HashUtil.sha256(token),
-         "true",
-         expirationMillis,
-         TimeUnit.MILLISECONDS
-      );
+      try {
+         redisTemplate.opsForValue().set(
+            "blacklist:access:" + HashUtil.sha256(token),
+            "true",
+            expirationMillis,
+            TimeUnit.MILLISECONDS
+         );
+      } catch (Exception e) {
+         log.warn("Redis unavailable, token blacklisting skipped");
+      }
    }
 
    public boolean isTokenBlacklisted(String token) {
-      return Boolean.TRUE.equals(
-         redisTemplate.hasKey("blacklist:access:" + HashUtil.sha256(token))
-      );
+      try {
+         return Boolean.TRUE.equals(
+            redisTemplate.hasKey("blacklist:access:" + HashUtil.sha256(token))
+         );
+      } catch (Exception e) {
+         log.warn("Redis unavailable, blacklist check skipped");
+         return false;
+      }
    }
 }
