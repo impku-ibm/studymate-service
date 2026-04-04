@@ -66,11 +66,14 @@ public class ClassSubjectServiceImpl implements ClassSubjectService {
                                                             )
                                             );
 
-         if (!classSubjectRepository
+         if (classSubjectRepository
                  .existsByAcademicYearAndSchoolClassAndSubject(
                     activeYear, schoolClass, subject)) {
+            log.info("Mapping already exists for class {} and subject {}, skipping", schoolClass.getName(), subject.getName());
+            continue;
+         }
 
-            ClassSubject cs = ClassSubject.builder()
+         ClassSubject cs = ClassSubject.builder()
                                           .academicYear(activeYear)
                                           .schoolClass(schoolClass)
                                           .subject(subject)
@@ -81,7 +84,6 @@ public class ClassSubjectServiceImpl implements ClassSubjectService {
                toResponse(classSubjectRepository.save(cs))
             );
          }
-      }
 
       return responses;
    }
@@ -114,6 +116,16 @@ public class ClassSubjectServiceImpl implements ClassSubjectService {
                 .map(this::toResponse)
                 .toList();
    }
+
+   @Override
+   public void removeMapping(Long id) {
+      log.info("removeMapping called - id: {}", id);
+      ClassSubject cs = classSubjectRepository.findById(id)
+         .orElseThrow(() -> new ResourceNotFoundException("Class-subject mapping not found"));
+      classSubjectRepository.delete(cs);
+      log.info("Removed class-subject mapping: {}", id);
+   }
+
 
    private ClassSubjectResponse toResponse(ClassSubject cs) {
       return ClassSubjectResponse.builder()

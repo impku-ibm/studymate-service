@@ -10,5 +10,7 @@ public interface ClassSubjectService {
    List<ClassSubjectResponse> assignSubjects(AssignSubjectsRequest request);
 
    List<ClassSubjectResponse> getSubjectsForClass(Long classId);
+
+   void removeMapping(Long id);
 }
 
