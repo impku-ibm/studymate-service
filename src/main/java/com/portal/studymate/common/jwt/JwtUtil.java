@@ -38,6 +38,7 @@ public class JwtUtil {
       return Jwts.builder()
                  .setSubject(user.getId())
                  .setIssuer("studymate")
+                 .claim("type", "access")
                  .claim("email", user.getEmail())
                  .claim("fullName", user.getFullName())
                  .claim("role", user.getRole().name())
@@ -67,7 +68,8 @@ public class JwtUtil {
 
       return Jwts.builder()
                  .setSubject(user.getId())
-                 .setIssuer("studymate")
+                 .setIssuer("studymate-refresh")
+                 .claim("type", "refresh")
                  .claim("schoolId", user.getSchoolId())
                  .setIssuedAt(new Date())
                  .setExpiration(new Date(expiry))

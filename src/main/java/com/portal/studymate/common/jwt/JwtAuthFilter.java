@@ -55,6 +55,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
          // 2. Parse token
          Claims claims = jwtUtil.parseToken(token);
 
+         // Reject refresh tokens used as access tokens
+         String tokenType = claims.get("type", String.class);
+         if ("refresh".equals(tokenType)) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh token cannot be used for API access");
+            return;
+         }
+
          String userId = claims.getSubject();               // sub
          String role = claims.get("role", String.class);
          String schoolCode = claims.get("schoolId", String.class);
