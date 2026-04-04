@@ -11,6 +11,8 @@ public interface ClassSubjectService {
 
    List<ClassSubjectResponse> getSubjectsForClass(Long classId);
 
+   List<ClassSubjectResponse> copySubjectsFromClass(Long sourceClassId, Long targetClassId);
+
    void removeMapping(Long id);
 }
 

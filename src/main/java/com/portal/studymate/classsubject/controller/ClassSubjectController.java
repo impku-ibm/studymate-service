@@ -52,5 +52,12 @@ public class ClassSubjectController {
    public void removeSubjectMapping(@PathVariable Long id) {
       classSubjectService.removeMapping(id);
    }
+
+   @PostMapping("/copy")
+   public List<ClassSubjectResponse> copyFromClass(
+      @RequestParam Long sourceClassId,
+      @RequestParam Long targetClassId) {
+      return classSubjectService.copySubjectsFromClass(sourceClassId, targetClassId);
+   }
 }
 

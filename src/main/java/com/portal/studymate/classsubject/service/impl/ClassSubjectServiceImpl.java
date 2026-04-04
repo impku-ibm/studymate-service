@@ -126,6 +126,42 @@ public class ClassSubjectServiceImpl implements ClassSubjectService {
       log.info("Removed class-subject mapping: {}", id);
    }
 
+   @Override
+   public List<ClassSubjectResponse> copySubjectsFromClass(Long sourceClassId, Long targetClassId) {
+      log.info("copySubjectsFromClass called - source: {}, target: {}", sourceClassId, targetClassId);
+
+      School school = SchoolContext.getSchool();
+      AcademicYear activeYear = academicYearRepository
+         .findBySchoolAndStatus(school, AcademicYearStatus.ACTIVE)
+         .orElseThrow(() -> new ResourceNotFoundException("ACTIVE_ACADEMIC_YEAR_NOT_FOUND"));
+
+      SchoolClass sourceClass = classRepository.findById(sourceClassId)
+         .orElseThrow(() -> new ResourceNotFoundException("Source class not found"));
+      SchoolClass targetClass = classRepository.findById(targetClassId)
+         .orElseThrow(() -> new ResourceNotFoundException("Target class not found"));
+
+      List<ClassSubject> sourceMappings = classSubjectRepository
+         .findByAcademicYearAndSchoolClass(activeYear, sourceClass);
+
+      List<ClassSubjectResponse> created = new ArrayList<>();
+      for (ClassSubject src : sourceMappings) {
+         if (!classSubjectRepository.existsByAcademicYearAndSchoolClassAndSubject(
+               activeYear, targetClass, src.getSubject())) {
+            ClassSubject cs = ClassSubject.builder()
+               .academicYear(activeYear)
+               .schoolClass(targetClass)
+               .subject(src.getSubject())
+               .active(true)
+               .build();
+            created.add(toResponse(classSubjectRepository.save(cs)));
+         }
+      }
+
+      log.info("Copied {} subjects from {} to {}", created.size(), sourceClass.getName(), targetClass.getName());
+      return created;
+   }
+
+
 
    private ClassSubjectResponse toResponse(ClassSubject cs) {
       return ClassSubjectResponse.builder()
