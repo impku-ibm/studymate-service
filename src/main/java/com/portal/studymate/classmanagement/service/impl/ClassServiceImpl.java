@@ -4,12 +4,16 @@ import com.portal.studymate.classmanagement.dto.ClassResponse;
 import com.portal.studymate.classmanagement.dto.CreateClassRequest;
 import com.portal.studymate.classmanagement.dto.UpdateClassRequest;
 import com.portal.studymate.classmanagement.model.SchoolClass;
+import com.portal.studymate.classmanagement.repository.ClassSectionTemplateRepository;
 import com.portal.studymate.classmanagement.repository.SchoolClassRepository;
 import com.portal.studymate.classmanagement.service.ClassService;
+import com.portal.studymate.classsubject.repository.ClassSubjectRepository;
 import com.portal.studymate.common.context.SchoolContext;
+import com.portal.studymate.common.exception.BadRequestException;
 import com.portal.studymate.common.exception.ConflictException;
 import com.portal.studymate.common.exception.ResourceNotFoundException;
 import com.portal.studymate.school.model.School;
+import com.portal.studymate.student.repository.StudentEnrollmentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +28,8 @@ import java.util.List;
 public class ClassServiceImpl implements ClassService {
 
    private final SchoolClassRepository classRepository;
+   private final ClassSectionTemplateRepository sectionRepository;
+   private final ClassSubjectRepository classSubjectRepository;
 
    @Override
    public ClassResponse createClass(CreateClassRequest request) {
@@ -83,8 +89,32 @@ public class ClassServiceImpl implements ClassService {
       log.info("deleteClass called - classId: {}", classId);
       SchoolClass schoolClass = classRepository.findById(classId)
          .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
-      classRepository.delete(schoolClass);
-      log.info("Class deleted: {}", schoolClass.getName());
+
+      // Delete child sections first
+      var sections = sectionRepository.findBySchoolClass(schoolClass);
+      if (!sections.isEmpty()) {
+         log.info("Deleting {} sections for class {}", sections.size(), schoolClass.getName());
+         sectionRepository.deleteAll(sections);
+      }
+
+      // Delete class-subject mappings
+      try {
+         var mappings = classSubjectRepository.findBySchoolClass(schoolClass);
+         if (!mappings.isEmpty()) {
+            log.info("Deleting {} class-subject mappings for class {}", mappings.size(), schoolClass.getName());
+            classSubjectRepository.deleteAll(mappings);
+         }
+      } catch (Exception e) {
+         log.warn("Could not delete class-subject mappings: {}", e.getMessage());
+      }
+
+      try {
+         classRepository.delete(schoolClass);
+         log.info("Class deleted: {}", schoolClass.getName());
+      } catch (Exception e) {
+         throw new BadRequestException("CLASS_HAS_DEPENDENCIES",
+            "Cannot delete class — it has students enrolled, fee structures, or other dependencies. Remove them first.");
+      }
    }
 
 

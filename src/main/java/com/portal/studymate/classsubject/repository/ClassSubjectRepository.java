@@ -23,5 +23,7 @@ public interface ClassSubjectRepository
    );
 
    List<ClassSubject> findByAcademicYear(AcademicYear academicYear);
+
+   List<ClassSubject> findBySchoolClass(SchoolClass schoolClass);
 }
 
