@@ -90,6 +90,16 @@ public class SectionServiceImpl implements SectionService {
       return toResponse(sectionRepository.save(section));
    }
 
+   @Override
+   public void deleteSection(Long sectionId) {
+      log.info("deleteSection called - sectionId: {}", sectionId);
+      var section = sectionRepository.findById(sectionId)
+         .orElseThrow(() -> new ResourceNotFoundException("Section not found"));
+      sectionRepository.delete(section);
+      log.info("Section deleted: {}", section.getName());
+   }
+
+
    private SectionResponse toResponse(ClassSectionTemplate s) {
       return SectionResponse.builder()
                             .id(s.getId())

@@ -13,4 +13,6 @@ public interface SectionService {
    List<SectionResponse> getSectionsByClass(Long classId);
 
    SectionResponse updateSection(Long sectionId, UpdateSectionRequest request);
+
+   void deleteSection(Long sectionId);
 }

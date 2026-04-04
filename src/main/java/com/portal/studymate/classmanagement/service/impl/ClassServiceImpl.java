@@ -78,6 +78,16 @@ public class ClassServiceImpl implements ClassService {
       return toResponse(classRepository.save(schoolClass));
    }
 
+   @Override
+   public void deleteClass(Long classId) {
+      log.info("deleteClass called - classId: {}", classId);
+      SchoolClass schoolClass = classRepository.findById(classId)
+         .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
+      classRepository.delete(schoolClass);
+      log.info("Class deleted: {}", schoolClass.getName());
+   }
+
+
    private ClassResponse toResponse(SchoolClass c) {
       return ClassResponse.builder()
                           .id(c.getId())

@@ -79,6 +79,16 @@ public class SubjectServiceImpl implements SubjectService {
       return toResponse(subjectRepository.save(subject));
    }
 
+   @Override
+   public void deleteSubject(Long subjectId) {
+      log.info("deleteSubject called - subjectId: {}", subjectId);
+      var subject = subjectRepository.findById(subjectId)
+         .orElseThrow(() -> new ResourceNotFoundException("Subject not found"));
+      subjectRepository.delete(subject);
+      log.info("Subject deleted: {}", subject.getName());
+   }
+
+
    private SubjectResponse toResponse(Subject s) {
       return SubjectResponse.builder()
                             .id(s.getId())

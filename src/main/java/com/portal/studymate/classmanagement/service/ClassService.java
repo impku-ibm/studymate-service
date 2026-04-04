@@ -13,4 +13,6 @@ public interface ClassService {
    List<ClassResponse> getAllClasses();
 
    ClassResponse updateClass(Long classId, UpdateClassRequest request);
+
+   void deleteClass(Long classId);
 }
