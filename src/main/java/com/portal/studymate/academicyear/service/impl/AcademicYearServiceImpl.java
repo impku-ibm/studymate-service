@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -44,6 +45,9 @@ public class AcademicYearServiceImpl implements AcademicYearService {
       int endYear = startYear + 1;
       String yearValue = startYear + "-" + endYear;
 
+      // Can't create a past academic year
+      validateNotPastYear(yearValue);
+
       // Prevent duplicate academic year
       academicYearRepository.findBySchoolAndYear(school, yearValue)
                             .ifPresent(existing -> {
@@ -53,13 +57,15 @@ public class AcademicYearServiceImpl implements AcademicYearService {
                                );
                             });
 
-      // Mark current ACTIVE year as COMPLETED (if any)
-      academicYearRepository.findBySchoolAndStatus(
-                               school, AcademicYearStatus.ACTIVE)
-                            .ifPresent(active -> {
-                               active.setStatus(AcademicYearStatus.COMPLETED);
-                               academicYearRepository.save(active);
-                            });
+      // Deactivate ALL currently active years for this school
+      List<AcademicYear> allYears = academicYearRepository.findBySchoolOrderByCreatedAtDesc(school);
+      for (AcademicYear ay : allYears) {
+         if (ay.getStatus() == AcademicYearStatus.ACTIVE) {
+            ay.setStatus(AcademicYearStatus.COMPLETED);
+            ay.setActive(false);
+            academicYearRepository.save(ay);
+         }
+      }
 
       AcademicYear academicYear = AcademicYear.builder()
                                               .school(school)
@@ -121,6 +127,31 @@ public class AcademicYearServiceImpl implements AcademicYearService {
                                  .build();
    }
 
+   /**
+    * Validates that the academic year is not in the past.
+    * Year format: "2025-2026". The end year (2026) must be >= current calendar year.
+    * Indian schools: session runs April to March, so "2025-2026" is valid until March 2026.
+    * We allow a 3-month grace (until June of end year) before considering it past.
+    */
+   private void validateNotPastYear(String yearValue) {
+      try {
+         String[] parts = yearValue.split("-");
+         int endYear = Integer.parseInt(parts[1]);
+         LocalDate now = LocalDate.now();
+         // Session "2025-2026" ends in March 2026, grace until June 2026
+         LocalDate cutoff = LocalDate.of(endYear, 6, 30);
+         if (now.isAfter(cutoff)) {
+            throw new com.portal.studymate.common.exception.BadRequestException(
+               "PAST_ACADEMIC_YEAR",
+               "Cannot activate academic year " + yearValue + " — it has already ended."
+            );
+         }
+      } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+         // Can't parse year format, skip validation
+         log.warn("Could not parse academic year format: {}", yearValue);
+      }
+   }
+
    // =========================
    // ACTIVATE ACADEMIC YEAR
    // =========================
@@ -132,13 +163,20 @@ public class AcademicYearServiceImpl implements AcademicYearService {
       AcademicYear target = academicYearRepository.findById(id)
          .orElseThrow(() -> new ResourceNotFoundException("ACADEMIC_YEAR_NOT_FOUND"));
 
-      // Deactivate current active year
-      academicYearRepository.findBySchoolAndStatus(school, AcademicYearStatus.ACTIVE)
-         .ifPresent(active -> {
-            active.setStatus(AcademicYearStatus.COMPLETED);
-            active.setActive(false);
-            academicYearRepository.save(active);
-         });
+      // Validate: can't activate a past academic year
+      // Year format is "2025-2026" — the end year must be >= current year
+      validateNotPastYear(target.getYear());
+
+      // Deactivate ALL currently active years for this school
+      List<AcademicYear> allYears = academicYearRepository.findBySchoolOrderByCreatedAtDesc(school);
+      for (AcademicYear ay : allYears) {
+         if (ay.getStatus() == AcademicYearStatus.ACTIVE && !ay.getId().equals(id)) {
+            ay.setStatus(AcademicYearStatus.COMPLETED);
+            ay.setActive(false);
+            academicYearRepository.save(ay);
+            log.info("Deactivated academic year: {}", ay.getYear());
+         }
+      }
 
       // Activate the target year
       target.setStatus(AcademicYearStatus.ACTIVE);
