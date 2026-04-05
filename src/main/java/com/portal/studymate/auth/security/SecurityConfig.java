@@ -46,6 +46,7 @@ public class SecurityConfig {
                                                   .requestMatchers("/auth/reset-password").permitAll()
                                                   .requestMatchers("/auth/login").permitAll()
                                                   .requestMatchers("/auth/refresh-token").permitAll()
+                                                  .requestMatchers("/auth/logout").permitAll()
                                                   .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

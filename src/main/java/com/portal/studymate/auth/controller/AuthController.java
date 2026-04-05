@@ -64,16 +64,12 @@ public class AuthController {
       @RequestHeader(value = "Authorization" , required = false) String authHeader ,
       @Valid @RequestBody LogoutRequest request) {
 
-      if (!authHeader.startsWith("Bearer ")) {
-         throw new InvalidTokenException("Invalid authorization header");
+      String token = null;
+      if (authHeader != null && authHeader.startsWith("Bearer ")) {
+         token = authHeader.substring(7);
       }
 
-      String token = authHeader.substring(7);
-
-      authService.logout(
-         authHeader.substring(7),
-         request.getRefreshToken()
-      );
+      authService.logout(token, request.getRefreshToken());
       return ResponseEntity.ok("Logged out successfully");
    }
 
